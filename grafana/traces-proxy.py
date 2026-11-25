@@ -4,12 +4,15 @@
 from __future__ import annotations
 
 import json
+import sys
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import urlopen
 
 TEMPO_URL = "http://tempo:3200"
+DEFAULT_LOOKBACK_SECONDS = 6 * 60 * 60
 
 
 def span_count(trace: dict) -> int:
@@ -23,17 +26,34 @@ def span_count(trace: dict) -> int:
     return len(span_set.get("spans") or [])
 
 
+def as_unix_seconds(raw: str | None, fallback: int) -> int:
+    if raw is None or raw == "":
+        return fallback
+    # Reject unexpanded Grafana/Infinity macros.
+    if "${" in raw or "__from" in raw or "__to" in raw:
+        return fallback
+    try:
+        value = float(raw)
+    except ValueError:
+        return fallback
+    # Allow ms timestamps by normalizing to seconds.
+    if value > 10_000_000_000:
+        value = value / 1000.0
+    return int(value)
+
+
 def flatten(payload: dict) -> list[dict]:
     rows: list[dict] = []
     for trace in payload.get("traces") or []:
         start_ns = int(trace.get("startTimeUnixNano") or 0)
+        start_ms = int(start_ns / 1_000_000) if start_ns else None
         rows.append(
             {
                 "traceID": trace.get("traceID") or "",
                 "service": trace.get("rootServiceName") or "",
                 "name": trace.get("rootTraceName") or "",
-                "startMs": start_ns / 1_000_000.0 if start_ns else None,
-                "durationMs": trace.get("durationMs") or 0,
+                "startMs": start_ms,
+                "durationMs": int(trace.get("durationMs") or 0),
                 "spans": span_count(trace),
             }
         )
@@ -51,10 +71,27 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         query = parse_qs(parsed.query, keep_blank_values=True)
-        params = [(key, value) for key, values in query.items() for value in values]
-        url = f"{TEMPO_URL}/api/search"
-        if params:
-            url = f"{url}?{urlencode(params)}"
+        now = int(time.time())
+        start = as_unix_seconds((query.get("start") or [None])[0], now - DEFAULT_LOOKBACK_SECONDS)
+        end = as_unix_seconds((query.get("end") or [None])[0], now)
+        if end <= start:
+            start = now - DEFAULT_LOOKBACK_SECONDS
+            end = now
+
+        params: list[tuple[str, str]] = [("start", str(start)), ("end", str(end))]
+        for key, values in query.items():
+            if key in {"start", "end"}:
+                continue
+            for value in values:
+                params.append((key, value))
+
+        if not any(key == "limit" for key, _ in params):
+            params.append(("limit", "20"))
+        if not any(key == "q" for key, _ in params):
+            params.append(("q", "{}"))
+
+        url = f"{TEMPO_URL}/api/search?{urlencode(params)}"
+        print(f"traces-proxy -> {url}", file=sys.stderr, flush=True)
 
         try:
             with urlopen(url, timeout=30) as response:  # noqa: S310 - local Tempo only
@@ -64,7 +101,9 @@ class Handler(BaseHTTPRequestHandler):
             self._write(502, body, "application/json")
             return
 
-        body = json.dumps(flatten(payload)).encode()
+        rows = flatten(payload)
+        print(f"traces-proxy <- {len(rows)} rows", file=sys.stderr, flush=True)
+        body = json.dumps(rows).encode()
         self._write(200, body, "application/json")
 
     def log_message(self, format: str, *args) -> None:  # noqa: A003

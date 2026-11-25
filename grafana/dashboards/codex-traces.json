@@ -100,9 +100,9 @@
             { "selector": "traceID", "text": "Trace ID", "type": "string" },
             { "selector": "service", "text": "Service", "type": "string" },
             { "selector": "name", "text": "Name", "type": "string" },
-            { "selector": "startMs", "text": "Start", "type": "timestamp" },
+            { "selector": "spans", "text": "Spans", "type": "number" },
             { "selector": "durationMs", "text": "Duration (ms)", "type": "number" },
-            { "selector": "spans", "text": "Spans", "type": "number" }
+            { "selector": "startMs", "text": "Start", "type": "number" }
           ],
           "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "tempo-search" },
           "filters": [],
@@ -113,16 +113,10 @@
           "root_selector": "",
           "source": "url",
           "type": "json",
-          "url": "http://traces-proxy:8080/search",
+          "url": "http://traces-proxy:8080/search?q={ resource.service.name =~ \"${service}\" }&limit=50&start=${__from:date:seconds}&end=${__to:date:seconds}",
           "url_options": {
             "data": "",
-            "method": "GET",
-            "params": [
-              { "key": "q", "value": "{ resource.service.name =~ \"${service}\" }" },
-              { "key": "limit", "value": "50" },
-              { "key": "start", "value": "${__from:date:seconds}" },
-              { "key": "end", "value": "${__to:date:seconds}" }
-            ]
+            "method": "GET"
           }
         }
       ],
@@ -201,6 +195,6 @@
   "timezone": "browser",
   "title": "Codex Traces",
   "uid": "codex-traces",
-  "version": 6,
+  "version": 7,
   "weekStart": ""
 }
