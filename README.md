@@ -32,8 +32,10 @@ an das Aspire Dashboard weiter:
 3. Codex lokal verwenden und einen Prompt mit einer **fiktiven** E-Mail-Adresse
    eingeben, z. B. `Erkläre test@example.com als Beispiel`. Im Dashboard unter
    <http://localhost:18888> die Logs, Traces und Metriken des Codex-Dienstes
-   ansehen. Die Ausgabe erfolgt gepuffert und kann etwas dauern. Je nach
-   Codex-Version und Aktion werden unterschiedliche Signale erzeugt.
+   ansehen. Im Bereich „Structured“ das Ereignis `codex.user_prompt` öffnen
+   und dessen `prompt`-Attribut prüfen. Die Ausgabe erfolgt gepuffert und kann
+   etwas dauern. Je nach Codex-Version und Aktion werden unterschiedliche
+   Signale erzeugt.
 
 Zum Stoppen `docker compose down` ausführen. Die Dashboard-Daten sind
 flüchtig und gehen beim Entfernen des Containers verloren. Zum Beenden des
