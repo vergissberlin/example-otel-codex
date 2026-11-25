@@ -42,3 +42,14 @@ datasources:
           matcherRegex: '"traceid":"(\\w+)"'
           url: "$${__value.raw}"
           urlDisplayLabel: View Trace
+
+  # Used to flatten Tempo search results (incl. serviceStats span counts) into tables.
+  - name: Tempo Search
+    type: yesoreyeram-infinity-datasource
+    uid: tempo-search
+    access: proxy
+    editable: false
+    jsonData:
+      auth_method: none
+      allowedHosts:
+        - http://tempo:3200

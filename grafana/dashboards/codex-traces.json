@@ -47,8 +47,8 @@
       "type": "traces"
     },
     {
-      "datasource": { "type": "tempo", "uid": "tempo" },
-      "description": "Click a Trace ID to load it in the waterfall above. Spans column counts returned spans (up to Spans Limit).",
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "tempo-search" },
+      "description": "Click a Trace ID to load it in the waterfall above. Spans comes from Tempo serviceStats.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -74,7 +74,8 @@
                     "url": "/d/codex-traces/codex-traces?orgId=1&${__url_time_range}&var-service=${service}&var-traceId=${__value.raw}"
                   }
                 ]
-              }
+              },
+              { "id": "custom.width", "value": 280 }
             ]
           },
           {
@@ -95,86 +96,38 @@
       },
       "targets": [
         {
-          "datasource": { "type": "tempo", "uid": "tempo" },
-          "limit": 50,
-          "spss": 500,
-          "query": "{ resource.service.name =~ \"$service\" }",
-          "queryType": "traceql",
+          "columns": [
+            { "selector": "traceID", "text": "Trace ID", "type": "string" },
+            { "selector": "service", "text": "Service", "type": "string" },
+            { "selector": "name", "text": "Name", "type": "string" },
+            { "selector": "startMs", "text": "Start", "type": "timestamp" },
+            { "selector": "durationMs", "text": "Duration (ms)", "type": "number" },
+            { "selector": "spans", "text": "Spans", "type": "number" }
+          ],
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "tempo-search" },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "parser": "backend",
           "refId": "A",
-          "tableType": "spans"
+          "root_selector": "traces.{\"traceID\": traceID, \"service\": rootServiceName, \"name\": rootTraceName, \"startMs\": $number(startTimeUnixNano)/1000000, \"durationMs\": durationMs, \"spans\": $exists(serviceStats) ? $sum($map($each(serviceStats), function($v) {$number($v.spanCount)})) : ($exists(spanSet.matched) ? $number(spanSet.matched) : $count(spanSet.spans))}",
+          "source": "url",
+          "type": "json",
+          "url": "http://tempo:3200/api/search",
+          "url_options": {
+            "data": "",
+            "method": "GET",
+            "params": [
+              { "key": "q", "value": "{ resource.service.name =~ \"${service}\" }" },
+              { "key": "limit", "value": "50" },
+              { "key": "start", "value": "${__from:date:seconds}" },
+              { "key": "end", "value": "${__to:date:seconds}" }
+            ]
+          }
         }
       ],
       "title": "Trace search",
-      "transformations": [
-        {
-          "id": "groupBy",
-          "options": {
-            "fields": {
-              "traceIdHidden": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "spanID": {
-                "aggregations": ["count"],
-                "operation": "aggregate"
-              },
-              "traceService": {
-                "aggregations": ["lastNotNull"],
-                "operation": "aggregate"
-              },
-              "traceName": {
-                "aggregations": ["lastNotNull"],
-                "operation": "aggregate"
-              },
-              "time": {
-                "aggregations": ["min"],
-                "operation": "aggregate"
-              },
-              "duration": {
-                "aggregations": ["max"],
-                "operation": "aggregate"
-              }
-            }
-          }
-        },
-        {
-          "id": "calculateField",
-          "options": {
-            "alias": "Duration (ms)",
-            "mode": "binary",
-            "reduce": { "reducer": "sum" },
-            "replaceFields": false,
-            "binary": {
-              "left": "duration (max)",
-              "operator": "/",
-              "right": "1000000"
-            }
-          }
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "duration (max)": true
-            },
-            "indexByName": {
-              "traceIdHidden": 0,
-              "traceService (lastNotNull)": 1,
-              "traceName (lastNotNull)": 2,
-              "time (min)": 3,
-              "Duration (ms)": 4,
-              "spanID (count)": 5
-            },
-            "renameByName": {
-              "traceIdHidden": "Trace ID",
-              "traceService (lastNotNull)": "Service",
-              "traceName (lastNotNull)": "Name",
-              "time (min)": "Start",
-              "spanID (count)": "Spans"
-            }
-          }
-        }
-      ],
+      "transformations": [],
       "type": "table"
     },
     {
@@ -248,6 +201,6 @@
   "timezone": "browser",
   "title": "Codex Traces",
   "uid": "codex-traces",
-  "version": 4,
+  "version": 5,
   "weekStart": ""
 }
