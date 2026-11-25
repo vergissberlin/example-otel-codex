@@ -162,7 +162,7 @@
     },
     {
       "datasource": { "type": "tempo", "uid": "tempo" },
-      "description": "Recent TraceQL hits. Click a Trace ID to open the waterfall. Traces become searchable a few seconds after spans finish.",
+      "description": "Recent traces with span counts. Click a Trace ID to open the waterfall. Span counts use returned spans (up to the Spans Limit).",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -190,6 +190,13 @@
                 ]
               }
             ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Spans" },
+            "properties": [
+              { "id": "custom.width", "value": 90 },
+              { "id": "custom.align", "value": "right" }
+            ]
           }
         ]
       },
@@ -204,25 +211,80 @@
         {
           "datasource": { "type": "tempo", "uid": "tempo" },
           "limit": 20,
+          "spss": 500,
           "query": "{}",
           "queryType": "traceql",
           "refId": "A",
-          "tableType": "traces"
+          "tableType": "spans"
         }
       ],
       "title": "Recent traces",
       "transformations": [
         {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "traceIdHidden": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "spanID": {
+                "aggregations": ["count"],
+                "operation": "aggregate"
+              },
+              "traceService": {
+                "aggregations": ["lastNotNull"],
+                "operation": "aggregate"
+              },
+              "traceName": {
+                "aggregations": ["lastNotNull"],
+                "operation": "aggregate"
+              },
+              "time": {
+                "aggregations": ["min"],
+                "operation": "aggregate"
+              },
+              "duration": {
+                "aggregations": ["max"],
+                "operation": "aggregate"
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "Duration (ms)",
+            "mode": "binary",
+            "reduce": { "reducer": "sum" },
+            "replaceFields": false,
+            "binary": {
+              "left": "duration (max)",
+              "operator": "/",
+              "right": "1000000"
+            }
+          }
+        },
+        {
           "id": "organize",
           "options": {
-            "excludeByName": {},
-            "indexByName": {},
+            "excludeByName": {
+              "duration (max)": true
+            },
+            "indexByName": {
+              "traceIdHidden": 0,
+              "traceService (lastNotNull)": 1,
+              "traceName (lastNotNull)": 2,
+              "time (min)": 3,
+              "Duration (ms)": 4,
+              "spanID (count)": 5
+            },
             "renameByName": {
-              "traceID": "Trace ID",
-              "rootServiceName": "Service",
-              "rootTraceName": "Name",
-              "startTime": "Start",
-              "durationMs": "Duration (ms)"
+              "traceIdHidden": "Trace ID",
+              "traceService (lastNotNull)": "Service",
+              "traceName (lastNotNull)": "Name",
+              "time (min)": "Start",
+              "spanID (count)": "Spans"
             }
           }
         }
@@ -275,6 +337,6 @@
   "timezone": "browser",
   "title": "Codex Overview",
   "uid": "codex-overview",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }
