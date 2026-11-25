@@ -73,7 +73,7 @@
         {
           "datasource": { "type": "loki", "uid": "loki" },
           "editorMode": "code",
-          "expr": "{service_name=~\"$service\"} | json | line_format \"{{.body}}\"",
+          "expr": "{service_name=~\"$service\"}",
           "queryType": "range",
           "refId": "A"
         }
@@ -100,7 +100,7 @@
         {
           "datasource": { "type": "loki", "uid": "loki" },
           "editorMode": "code",
-          "expr": "{service_name=~\"$service\"} |= \"prompt\" | json",
+          "expr": "{service_name=~\"$service\"} | event_name =~ \"(?i).*(prompt|user_prompt).*\" or prompt =~ \".+\"",
           "queryType": "range",
           "refId": "A"
         }

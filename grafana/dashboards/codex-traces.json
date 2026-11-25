@@ -118,7 +118,7 @@
         {
           "datasource": { "type": "loki", "uid": "loki" },
           "editorMode": "code",
-          "expr": "{service_name=~\"$service\"} | json",
+          "expr": "{service_name=~\"$service\"}",
           "queryType": "range",
           "refId": "A"
         }
