@@ -184,8 +184,8 @@
                 "id": "links",
                 "value": [
                   {
-                    "title": "View trace",
-                    "url": "/explore?orgId=1&left=${__url_time_range}&right=${__url_time_range}&left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22query%22:%22${__value.raw}%22,%22queryType%22:%22traceql%22%7D%5D%7D"
+                    "title": "Show waterfall",
+                    "url": "/d/codex-overview/codex-overview?orgId=1&${__url_time_range}&var-traceId=${__value.raw}"
                   }
                 ]
               }
@@ -193,7 +193,7 @@
           }
         ]
       },
-      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 21 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 21 },
       "id": 7,
       "options": {
         "cellHeight": "sm",
@@ -228,17 +228,53 @@
         }
       ],
       "type": "table"
+    },
+    {
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "description": "Waterfall for the selected Trace ID. Click a Trace ID above or use the Trace ID dropdown.",
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 29 },
+      "id": 8,
+      "targets": [
+        {
+          "datasource": { "type": "tempo", "uid": "tempo" },
+          "query": "${traceId}",
+          "queryType": "traceql",
+          "refId": "A"
+        }
+      ],
+      "title": "Trace waterfall",
+      "type": "traces"
     }
   ],
   "refresh": "10s",
   "schemaVersion": 39,
   "tags": ["codex", "otel", "overview"],
-  "templating": { "list": [] },
+  "templating": {
+    "list": [
+      {
+        "allValue": "",
+        "current": {},
+        "datasource": { "type": "loki", "uid": "loki" },
+        "definition": "label_values({service_name=~\"codex.*\"}, trace_id)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Trace ID",
+        "multi": false,
+        "name": "traceId",
+        "query": "label_values({service_name=~\"codex.*\"}, trace_id)",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 3,
+        "type": "query"
+      }
+    ]
+  },
   "time": { "from": "now-6h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
   "title": "Codex Overview",
   "uid": "codex-overview",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }

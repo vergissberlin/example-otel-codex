@@ -32,7 +32,23 @@
   "panels": [
     {
       "datasource": { "type": "tempo", "uid": "tempo" },
-      "description": "TraceQL search list. Services from Codex are typically codex-app-server and codex-exec-server. Click a Trace ID link.",
+      "description": "Waterfall for the selected Trace ID. Pick a row in the table below or choose Trace ID in the dropdown. Empty until a trace is selected.",
+      "gridPos": { "h": 16, "w": 24, "x": 0, "y": 0 },
+      "id": 3,
+      "targets": [
+        {
+          "datasource": { "type": "tempo", "uid": "tempo" },
+          "query": "${traceId}",
+          "queryType": "traceql",
+          "refId": "A"
+        }
+      ],
+      "title": "Trace waterfall",
+      "type": "traces"
+    },
+    {
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "description": "Click a Trace ID to load it in the waterfall above (sets the Trace ID variable).",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -54,8 +70,8 @@
                 "id": "links",
                 "value": [
                   {
-                    "title": "View trace",
-                    "url": "/explore?orgId=1&left=${__url_time_range}&right=${__url_time_range}&left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22query%22:%22${__value.raw}%22,%22queryType%22:%22traceql%22%7D%5D%7D"
+                    "title": "Show waterfall",
+                    "url": "/d/codex-traces/codex-traces?orgId=1&${__url_time_range}&var-service=${service}&var-traceId=${__value.raw}"
                   }
                 ]
               }
@@ -63,7 +79,7 @@
           }
         ]
       },
-      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 0 },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 16 },
       "id": 1,
       "options": {
         "cellHeight": "sm",
@@ -102,7 +118,7 @@
     {
       "datasource": { "type": "loki", "uid": "loki" },
       "description": "Logs for the selected service regex.",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 14 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 26 },
       "id": 2,
       "options": {
         "dedupStrategy": "none",
@@ -145,6 +161,23 @@
         ],
         "query": "codex.*,.+,codex-app-server,codex-exec-server",
         "type": "custom"
+      },
+      {
+        "allValue": "",
+        "current": {},
+        "datasource": { "type": "loki", "uid": "loki" },
+        "definition": "label_values({service_name=~\"$service\"}, trace_id)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Trace ID",
+        "multi": false,
+        "name": "traceId",
+        "query": "label_values({service_name=~\"$service\"}, trace_id)",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 3,
+        "type": "query"
       }
     ]
   },
@@ -153,6 +186,6 @@
   "timezone": "browser",
   "title": "Codex Traces",
   "uid": "codex-traces",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }
