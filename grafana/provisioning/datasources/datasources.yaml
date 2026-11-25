@@ -43,7 +43,7 @@ datasources:
           url: "$${__value.raw}"
           urlDisplayLabel: View Trace
 
-  # Used to flatten Tempo search results (incl. serviceStats span counts) into tables.
+  # Reads flattened Tempo search rows (incl. span counts) from traces-proxy.
   - name: Tempo Search
     type: yesoreyeram-infinity-datasource
     uid: tempo-search
@@ -52,4 +52,4 @@ datasources:
     jsonData:
       auth_method: none
       allowedHosts:
-        - http://tempo:3200
+        - http://traces-proxy:8080

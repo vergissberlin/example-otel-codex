@@ -231,10 +231,10 @@
           "global_query_id": "",
           "parser": "backend",
           "refId": "A",
-          "root_selector": "traces.{\"traceID\": traceID, \"service\": rootServiceName, \"name\": rootTraceName, \"startMs\": $number(startTimeUnixNano)/1000000, \"durationMs\": durationMs, \"spans\": $exists(serviceStats) ? $sum($map($each(serviceStats), function($v) {$number($v.spanCount)})) : ($exists(spanSet.matched) ? $number(spanSet.matched) : $count(spanSet.spans))}",
+          "root_selector": "",
           "source": "url",
           "type": "json",
-          "url": "http://tempo:3200/api/search",
+          "url": "http://traces-proxy:8080/search",
           "url_options": {
             "data": "",
             "method": "GET",
@@ -297,6 +297,6 @@
   "timezone": "browser",
   "title": "Codex Overview",
   "uid": "codex-overview",
-  "version": 5,
+  "version": 6,
   "weekStart": ""
 }

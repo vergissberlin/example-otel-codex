@@ -76,11 +76,11 @@ collector.
 - **Grafana (split):** Anonymous admin on port 3200. Datasources and three
   provisioned dashboards (Codex Overview, Traces, Logs) live under `grafana/`.
   Open <http://127.0.0.1:3200/dashboards> or jump to
-  <http://127.0.0.1:3200/d/codex-overview>.   Trace tables include a Spans column (from Tempo `serviceStats`) via the
-  Infinity datasource plugin. The Trace waterfall panel shows the selected Trace
-  ID inline — click a Trace ID or use the Trace ID dropdown. Codex services are
-  typically `codex-app-server` and `codex-exec-server`. Traces become searchable
-  a couple of seconds after spans finish.
+  <http://127.0.0.1:3200/d/codex-overview>.   Trace tables include a Spans column (Tempo `serviceStats`, via `traces-proxy`
+  + Infinity). The Trace waterfall panel shows the selected Trace ID inline —
+  click a Trace ID or use the Trace ID dropdown. Codex services are typically
+  `codex-app-server` and `codex-exec-server`. Traces become searchable a couple
+  of seconds after spans finish.
 - **otel-lgtm:** Single image with Loki, Grafana, Tempo, Mimir/Prometheus, and
   Alloy. Collector still sits in front for redaction.
 - **Jaeger / Zipkin:** Classic trace UIs. Non-trace signals are accepted so Codex

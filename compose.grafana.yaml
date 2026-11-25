@@ -37,6 +37,14 @@ services:
     volumes:
       - ./grafana/prometheus.yml:/etc/prometheus/prometheus.yml:ro
 
+  traces-proxy:
+    image: python:3.12-alpine
+    command: ["python", "/app/traces-proxy.py"]
+    volumes:
+      - ./grafana/traces-proxy.py:/app/traces-proxy.py:ro
+    depends_on:
+      - tempo
+
   grafana:
     image: grafana/grafana:11.5.2
     environment:
@@ -54,3 +62,4 @@ services:
       - tempo
       - loki
       - prometheus
+      - traces-proxy
