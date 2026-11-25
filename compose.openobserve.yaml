@@ -1,0 +1,29 @@
+# OpenObserve: logs, metrics, and traces UI on http://127.0.0.1:5080
+# Login: root@example.com / Complexpass#123 (local demo only)
+# Start: docker compose -f compose.openobserve.yaml up -d
+services:
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.120.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./otel-collector.openobserve.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+    depends_on:
+      - openobserve
+
+  openobserve:
+    image: public.ecr.aws/zinclabs/openobserve:v0.14.6
+    environment:
+      ZO_ROOT_USER_EMAIL: root@example.com
+      ZO_ROOT_USER_PASSWORD: Complexpass#123
+      ZO_LOCAL_MODE: "true"
+      ZO_TELEMETRY: "false"
+    ports:
+      - "127.0.0.1:5080:5080"
+    volumes:
+      - openobserve-data:/data
+
+volumes:
+  openobserve-data:

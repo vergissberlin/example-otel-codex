@@ -1,79 +1,135 @@
-# Codex-Telemetrie mit OpenTelemetry und Aspire
+# Codex Telemetry with OpenTelemetry
 
-Dieses lokale Beispiel sendet Codex-Logs, -Metriken und -Traces per OTLP/gRPC an
-einen OpenTelemetry Collector. Der Collector bearbeitet die Daten und leitet sie
-an das Aspire Dashboard weiter:
+This local example sends Codex logs, metrics, and traces via OTLP/gRPC to an
+OpenTelemetry Collector. The collector redacts sample email addresses in prompt
+attributes and forwards signals to a visualization frontend.
 
-`Codex (CLI oder Desktop-App) → Collector → Aspire Dashboard`
+`Codex (CLI or desktop app) → Collector → Dashboard`
 
-## Voraussetzungen
+## Prerequisites
 
-- Docker mit laufendem Docker-Daemon und Docker Compose.
-- Eine aktuelle Codex CLI oder Codex in der ChatGPT-/Codex-Desktop-App mit
-  Unterstützung für die `otel`-Konfiguration und Zugriff auf ein Codex-Konto.
-- Freie lokale Ports 4317, 4318 und 18888 sowie Internetzugriff zum Laden der
-  Container-Images und für Codex.
+- Docker with a running daemon and Docker Compose.
+- A current Codex CLI or Codex desktop app with `otel` config support and a
+  Codex account.
+- Free local ports for the stack you start (see table below) and network access
+  to pull images and use Codex.
 
-## Start
+## Default stack: Aspire Dashboard
 
-1. Im Repository-Verzeichnis den Collector und das Dashboard starten:
+1. Start collector and dashboard:
 
    ```sh
    docker compose up -d
    ```
 
-2. Den Inhalt von [`codex/config.toml`](codex/config.toml) in die globale
-   Codex-Konfiguration `~/.codex/config.toml` übernehmen (unter Windows:
-   `%USERPROFILE%\.codex\config.toml`). Eine vorhandene Datei vorher sichern
-   und die Einstellungen in einen bestehenden `[otel]`-Abschnitt integrieren,
-   statt andere Einstellungen zu überschreiben. Bei abweichendem `CODEX_HOME`
-   liegt die Datei dort. Die Desktop-App und die CLI verwenden diese gemeinsame
-   Konfiguration; nach der Änderung die App vollständig neu starten.
-3. Codex lokal verwenden und einen Prompt mit einer **fiktiven** E-Mail-Adresse
-   eingeben, z. B. `Erkläre test@example.com als Beispiel`. Im Dashboard unter
-   <http://localhost:18888> die Logs, Traces und Metriken des Codex-Dienstes
-   ansehen. Im Bereich „Structured“ das Ereignis `codex.user_prompt` öffnen
-   und dessen `prompt`-Attribut prüfen. Die Ausgabe erfolgt gepuffert und kann
-   etwas dauern. Je nach Codex-Version und Aktion werden unterschiedliche
-   Signale erzeugt.
+2. Merge [`codex/config.toml`](codex/config.toml) into the global Codex config
+   `~/.codex/config.toml` (Windows: `%USERPROFILE%\.codex\config.toml`). Back up
+   an existing file first and integrate into an existing `[otel]` section instead
+   of overwriting other settings. If `CODEX_HOME` differs, use that path. Desktop
+   and CLI share this config; fully restart the app after changing it.
+3. Use Codex locally and send a prompt with a **fictional** email address, e.g.
+   `Explain test@example.com as an example`. Open
+   <http://localhost:18888>, find the Codex service signals, open the structured
+   `codex.user_prompt` event, and check the `prompt` attribute. Export is buffered
+   and may take a moment. Signals vary by Codex version and action.
 
-Zum Stoppen `docker compose down` ausführen. Die Dashboard-Daten sind
-flüchtig und gehen beim Entfernen des Containers verloren. Zum Beenden des
-Exports den hinzugefügten `[otel]`-Abschnitt wieder entfernen bzw. die
-ursprüngliche Konfiguration wiederherstellen und Codex neu starten.
+Stop with `docker compose down`. Dashboard data is ephemeral. To stop exporting,
+remove the added `[otel]` section (or restore the previous config) and restart
+Codex.
 
-## Datenschutz und Grenzen
+## Alternative open-source dashboards
 
-Für die Demonstration aktiviert `log_user_prompt = true` den Export von
-Prompttexten. Der Collector ersetzt E-Mail-Adressen, die dem Beispielmuster
-entsprechen, im `prompt`-Attribut von Logs und Span-Ereignissen durch
-`[REDACTED_EMAIL]`. Die Verarbeitung findet **erst im Collector** statt:
-Codex sendet den ursprünglichen Prompt an den lokalen Collector. Metriken
-werden unverändert weitergeleitet.
+Only one stack should bind host ports `4317`/`4318` at a time. Stop the running
+stack before starting another:
 
-Das ist **keine vollständige Anonymisierung**: andere personenbezogene Daten,
-nicht erkannte E-Mail-Adressen und sensible Inhalte in anderen Attributen,
-Logs, Traces oder Metriken bleiben möglicherweise erhalten. Keine echten
-personenbezogenen Daten oder Geheimnisse für dieses Beispiel verwenden. Für
-mehr Datenschutz `log_user_prompt = false` setzen; dann ist die Demonstration
-der Prompt-Schwärzung nicht mehr sichtbar.
+```sh
+docker compose down
+# or, for an alternative file:
+docker compose -f compose.<name>.yaml down
+```
 
-Der Collector und das Dashboard sind für eine lokale Demo ohne TLS und ohne
-Authentifizierung eingerichtet. Die veröffentlichten Ports sind nur an
-`127.0.0.1` gebunden; nicht unverändert öffentlich oder produktiv betreiben.
-Das Dashboard empfängt OTLP nur über das interne Compose-Netzwerk.
+| Compose file | Stack | UI | Signals |
+| --- | --- | --- | --- |
+| `compose.yaml` | Aspire Dashboard | <http://127.0.0.1:18888> | logs, metrics, traces |
+| `compose.grafana.yaml` | Grafana + Tempo + Loki + Prometheus | <http://127.0.0.1:3200> | logs, metrics, traces |
+| `compose.otel-lgtm.yaml` | Grafana otel-lgtm (all-in-one) | <http://127.0.0.1:3000> | logs, metrics, traces |
+| `compose.jaeger.yaml` | Jaeger all-in-one | <http://127.0.0.1:16686> | traces (logs/metrics dropped) |
+| `compose.zipkin.yaml` | Zipkin | <http://127.0.0.1:9411> | traces (logs/metrics dropped) |
+| `compose.openobserve.yaml` | OpenObserve | <http://127.0.0.1:5080> | logs, metrics, traces |
 
-## Fehlersuche
+Examples:
 
-- `docker compose ps` und `docker compose logs collector aspire` zeigen den
-  Containerstatus und Verbindungsfehler. Bei Portkonflikten die Belegung prüfen.
-- Prüfen, ob die globale Konfiguration übernommen und Codex nach der Änderung
-  neu gestartet wurde. Der Collector muss auf demselben Rechner erreichbar
-  sein wie der Codex-Prozess (`127.0.0.1:4317`).
-- Bei einem leeren Dashboard einen neuen Prompt ausführen und kurz warten;
-  Metriken werden periodisch exportiert. Das Dashboard zeigt nur Daten seit
-  seinem Start.
+```sh
+docker compose -f compose.grafana.yaml up -d
+docker compose -f compose.jaeger.yaml up -d
+docker compose -f compose.zipkin.yaml up -d
+docker compose -f compose.openobserve.yaml up -d
+docker compose -f compose.otel-lgtm.yaml up -d
+```
 
-Weitere Informationen: [Codex-Konfiguration](https://developers.openai.com/codex/config-reference/),
-[OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) und
-[Aspire Dashboard](https://learn.microsoft.com/dotnet/aspire/fundamentals/dashboard/standalone).
+Codex keeps exporting to `127.0.0.1:4317` in every stack; only the backend behind
+the collector changes. Each stack uses the same prompt email redaction in the
+collector.
+
+### Notes per stack
+
+- **Grafana (split):** Anonymous admin on port 3200. Datasources and three
+  provisioned dashboards (Codex Overview, Traces, Logs) live under `grafana/`.
+  Open <http://127.0.0.1:3200/dashboards> or jump to
+  <http://127.0.0.1:3200/d/codex-overview>. Trace search lists use table panels;
+  click a Trace ID (or use Explore → Tempo with `{}`) for the waterfall. Codex
+  services are typically `codex-app-server` and `codex-exec-server`. Traces become
+  searchable a couple of seconds after spans finish.
+- **otel-lgtm:** Single image with Loki, Grafana, Tempo, Mimir/Prometheus, and
+  Alloy. Collector still sits in front for redaction.
+- **Jaeger / Zipkin:** Classic trace UIs. Non-trace signals are accepted so Codex
+  does not fail, then discarded (`nop` exporter).
+- **OpenObserve:** Login `root@example.com` / `Complexpass#123` (local demo only).
+  Data is stored in the `openobserve-data` volume.
+
+Minimal one-container alternative without this repo's redaction collector:
+
+```sh
+docker run -d --rm \
+  --name codex-telemetry \
+  -p 127.0.0.1:3000:3000 \
+  -p 127.0.0.1:4317:4317 \
+  -p 127.0.0.1:4318:4318 \
+  grafana/otel-lgtm:0.11.0
+```
+
+## Privacy and limits
+
+For the demo, `log_user_prompt = true` exports prompt text. The collector replaces
+email addresses matching the sample pattern in the `prompt` attribute of logs and
+span events with `[REDACTED_EMAIL]`. Processing happens **only in the collector**:
+Codex sends the original prompt to the local collector. Metrics are forwarded
+unchanged.
+
+This is **not full anonymization**: other personal data, unrecognized emails, and
+sensitive content in other attributes, logs, traces, or metrics may remain. Do not
+use real personal data or secrets for this example. For more privacy set
+`log_user_prompt = false`; then the prompt-redaction demo is no longer visible.
+
+Collector and dashboards are local demos without TLS or authentication (except
+OpenObserve's demo login). Published ports bind to `127.0.0.1` only; do not run
+unchanged on a public host or in production. Dashboards receive OTLP only on the
+internal Compose network.
+
+## Troubleshooting
+
+- `docker compose -f <file> ps` and `docker compose -f <file> logs` show status and
+  connection errors. Check port conflicts if a container fails to start.
+- Confirm the global Codex config was applied and Codex was restarted. The
+  collector must be reachable from the Codex process (`127.0.0.1:4317`).
+- On an empty UI, send a new prompt and wait briefly; metrics export periodically.
+  UIs only show data since their start.
+- Trace-only UIs (Jaeger, Zipkin) will not show logs or metrics by design.
+
+Further reading: [Codex configuration](https://developers.openai.com/codex/config-reference/),
+[OpenTelemetry Collector](https://opentelemetry.io/docs/collector/),
+[Aspire Dashboard](https://learn.microsoft.com/dotnet/aspire/fundamentals/dashboard/standalone),
+[Grafana Tempo](https://grafana.com/docs/tempo/),
+[Jaeger](https://www.jaegertracing.io/),
+[Zipkin](https://zipkin.io/),
+[OpenObserve](https://openobserve.ai/docs/).

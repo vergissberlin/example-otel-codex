@@ -1,0 +1,26 @@
+# Grafana otel-lgtm all-in-one (Loki, Grafana, Tempo, Prometheus, Alloy)
+# UI: http://127.0.0.1:3000
+# Start: docker compose -f compose.otel-lgtm.yaml up -d
+#
+# Our collector sits in front for the same prompt redaction as the other stacks.
+services:
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.120.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./otel-collector.otel-lgtm.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+    depends_on:
+      - lgtm
+
+  lgtm:
+    image: grafana/otel-lgtm:0.11.0
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    ports:
+      - "127.0.0.1:3000:3000"
+    # Internal OTLP on 4317/4318 is only reachable from the collector.

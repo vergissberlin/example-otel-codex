@@ -1,0 +1,20 @@
+# Zipkin: traces UI on http://127.0.0.1:9411
+# Start: docker compose -f compose.zipkin.yaml up -d
+services:
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.120.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./otel-collector.zipkin.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+    depends_on:
+      - zipkin
+
+  zipkin:
+    image: openzipkin/zipkin-slim:3.4.3
+    environment:
+      STORAGE_TYPE: mem
+    ports:
+      - "127.0.0.1:9411:9411"
