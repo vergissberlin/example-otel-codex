@@ -42,14 +42,3 @@ datasources:
           matcherRegex: '"traceid":"(\\w+)"'
           url: "$${__value.raw}"
           urlDisplayLabel: View Trace
-
-  # Reads flattened Tempo search rows (incl. span counts) from traces-proxy.
-  - name: Tempo Search
-    type: yesoreyeram-infinity-datasource
-    uid: tempo-search
-    access: proxy
-    editable: false
-    jsonData:
-      auth_method: none
-      allowedHosts:
-        - http://traces-proxy:8080

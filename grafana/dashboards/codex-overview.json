@@ -161,8 +161,8 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "tempo-search" },
-      "description": "Recent Tempo search hits including total span count from serviceStats. Click a Trace ID to open the waterfall.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "Recent Tempo traces with span counts (via traces-proxy → Prometheus). Click a Trace ID to open the waterfall.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -196,53 +196,75 @@
             "matcher": { "id": "byName", "options": "Spans" },
             "properties": [
               { "id": "custom.width", "value": 90 },
-              { "id": "custom.align", "value": "right" }
-            ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "Duration (ms)" },
-            "properties": [
-              { "id": "custom.width", "value": 120 },
-              { "id": "custom.align", "value": "right" }
+              { "id": "custom.align", "value": "right" },
+              { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "basic" } },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "transparent", "value": null },
+                    { "color": "blue", "value": 1 }
+                  ]
+                }
+              }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 21 },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 21 },
       "id": 7,
       "options": {
         "cellHeight": "sm",
-        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
-        "showHeader": true
+        "footer": { "countRows": true, "fields": "", "reducer": ["sum"], "show": true },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Spans" }]
       },
       "targets": [
         {
-          "columns": [
-            { "selector": "traceID", "text": "Trace ID", "type": "string" },
-            { "selector": "service", "text": "Service", "type": "string" },
-            { "selector": "name", "text": "Name", "type": "string" },
-            { "selector": "spans", "text": "Spans", "type": "number" },
-            { "selector": "durationMs", "text": "Duration (ms)", "type": "number" },
-            { "selector": "startMs", "text": "Start", "type": "number" }
-          ],
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "tempo-search" },
-          "filters": [],
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "trace_spans",
           "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "json",
-          "url": "http://traces-proxy:8080/search?q={}&limit=20&start=${__from:date:seconds}&end=${__to:date:seconds}",
-          "url_options": {
-            "data": "",
-            "method": "GET"
-          }
+          "instant": true,
+          "legendFormat": "__auto",
+          "refId": "A"
         }
       ],
       "title": "Recent traces",
-      "transformations": [],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": { "mode": "columns" }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "job": true,
+              "instance": true,
+              "__name__": true
+            },
+            "indexByName": {
+              "trace_id": 0,
+              "service": 1,
+              "name": 2,
+              "Value": 3,
+              "duration_ms": 4,
+              "start_ms": 5
+            },
+            "renameByName": {
+              "trace_id": "Trace ID",
+              "service": "Service",
+              "name": "Name",
+              "Value": "Spans",
+              "duration_ms": "Duration (ms)",
+              "start_ms": "Start (ms)"
+            }
+          }
+        }
+      ],
       "type": "table"
     },
     {
@@ -292,6 +314,6 @@
   "timezone": "browser",
   "title": "Codex Overview",
   "uid": "codex-overview",
-  "version": 7,
+  "version": 8,
   "weekStart": ""
 }
