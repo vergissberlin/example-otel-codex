@@ -8,7 +8,7 @@ import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qs, urlencode, urlparse, quote
+from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import urlopen
 
 TEMPO_URL = "http://tempo:3200"

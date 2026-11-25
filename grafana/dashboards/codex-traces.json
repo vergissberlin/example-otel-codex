@@ -124,6 +124,10 @@
           "options": { "mode": "columns" }
         },
         {
+          "id": "merge",
+          "options": {}
+        },
+        {
           "id": "organize",
           "options": {
             "excludeByName": {
@@ -136,7 +140,7 @@
               "trace_id": 0,
               "service": 1,
               "name": 2,
-              "Value": 3,
+              "trace_spans": 3,
               "duration_ms": 4,
               "start_ms": 5
             },
@@ -144,6 +148,7 @@
               "trace_id": "Trace ID",
               "service": "Service",
               "name": "Name",
+              "trace_spans": "Spans",
               "Value": "Spans",
               "duration_ms": "Duration (ms)",
               "start_ms": "Start (ms)"
@@ -224,6 +229,6 @@
   "timezone": "browser",
   "title": "Codex Traces",
   "uid": "codex-traces",
-  "version": 8,
+  "version": 9,
   "weekStart": ""
 }
